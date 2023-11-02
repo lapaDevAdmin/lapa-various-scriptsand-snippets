@@ -81,14 +81,26 @@ if record.state == 'posted' and record.move_type != 'in_refund' and record.move_
                 price_difference = round(
                     current_invoice_price - most_recent_price, 2)
 
+                if price_difference == 0:
+                    continue
+
                 # Update the customer pricelists
                 pricelist_item_lines = env['product.pricelist.item'].search([
                     ('product_tmpl_id', '=', product_template_id),
                     ('compute_price', '=', 'fixed')
                 ])
 
+                # Define restricted pricelist IDs
+                # 1168 is luigias group price list
+                restricted_pricelist_ids = [1, 5, 6, 8, 11, 4, 3, 1168]
+
                 log_entries = []
                 for item in pricelist_item_lines:
+
+                    # Skip the pricelist if it's in the restricted list
+                    if item.pricelist_id.id in restricted_pricelist_ids:
+                        continue
+
                     old_price = item.fixed_price
                     # Update based on the price difference
                     new_price = round(old_price + price_difference, 2)

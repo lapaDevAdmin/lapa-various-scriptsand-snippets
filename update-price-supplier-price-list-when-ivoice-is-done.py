@@ -88,6 +88,8 @@ if record.state == 'posted' and record.move_type != 'in_refund' and record.move_
                         'currency_id': oldest_supplier.currency_id.id,
                         'date_start': current_date,
                         'sequence': 1,
+                        'product_name': oldest_supplier.product_name,
+                        'product_code': oldest_supplier.product_code,
                     })
                     price_updated = True  # Set the flag to True because the price was updated
 
