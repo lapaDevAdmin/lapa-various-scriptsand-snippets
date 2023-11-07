@@ -1,39 +1,41 @@
-# ID delle etichette
-id_cliente_pasta_fresca = 102  # ID dell'etichetta "CLIENTE PASTA FRESCA"
-id_da_chiamare_lunedi = 103  # ID dell'etichetta "DA CHIAMARE LUNEDI"
+# IDs of the labels for categorization
+id_cliente_pasta_fresca = 102  # The ID for the "Fresh Pasta Client" label
+id_da_chiamare_lunedi = 103    # The ID for the "To Call on Monday" label
 
-# Verifica che le etichette esistano
+# Check if the labels exist by trying to browse them using their IDs
+# If they don't exist, log an error
 etichetta_cliente_pasta_fresca = env['res.partner.category'].browse(
     id_cliente_pasta_fresca)
 etichetta_da_chiamare_lunedi = env['res.partner.category'].browse(
     id_da_chiamare_lunedi)
 
 if not etichetta_cliente_pasta_fresca.exists():
-    log('L\'etichetta "CLIENTE PASTA FRESCA" non esiste.', level='error')
-    # Potresti voler interrompere l'esecuzione qui o gestire la situazione diversamente
-if not etichetta_da_chiamare_lunedi.exists():
-    log('L\'etichetta "DA CHIAMARE LUNEDI" non esiste.', level='error')
-    # Potresti voler interrompere l'esecuzione qui o gestire la situazione diversamente
+    log('The "Fresh Pasta Client" label does not exist.', level='error')
+    # Depending on requirements, you could stop the script here with 'return' or handle differently
 
-# Se entrambe le etichette esistono, procediamo
+if not etichetta_da_chiamare_lunedi.exists():
+    log('The "To Call on Monday" label does not exist.', level='error')
+    # Depending on requirements, you could stop the script here with 'return' or handle differently
+
+# Proceed only if both labels exist
 if etichetta_cliente_pasta_fresca.exists() and etichetta_da_chiamare_lunedi.exists():
-    # Cerca tutti i contatti con l'etichetta "CLIENTE PASTA FRESCA"
+    # Search for all contacts tagged as "Fresh Pasta Client"
     contatti = env['res.partner'].search(
         [('category_id', 'in', [id_cliente_pasta_fresca])])
 
     for contatto in contatti:
-        # Aggiungi l'etichetta "DA CHIAMARE LUNEDI" al contatto se non è già presente
+        # If the contact does not have the "To Call on Monday" tag, add it
         if id_da_chiamare_lunedi not in contatto.category_id.ids:
             contatto.write({'category_id': [(4, id_da_chiamare_lunedi)]})
 
-        # Crea una nuova attività per il contatto
+        # Create a new activity for the contact with details about the action to be taken
+        # This creates a reminder to contact the customer about the fresh pasta order
         env['mail.activity'].create({
             'res_model_id': env['ir.model'].search([('model', '=', 'res.partner')], limit=1).id,
             'res_id': contatto.id,
-            'activity_type_id': 4,
+            'activity_type_id': 4,  # Replace with the correct ID for your 'Call' activity type
             'user_id': env.user.id,
-            'note': 'Contattare il cliente per ordine pasta fresca',
-            'summary': 'Contattare il cliente per ordine pasta fresca',
-            # Usa datetime.date.today() per ottenere la data odierna
-            'date_deadline': datetime.date.today()
+            'note': 'Contact the customer for fresh pasta order',
+            'summary': 'Contact the customer for fresh pasta order',
+            'date_deadline': datetime.date.today()  # Sets the deadline to today's date
         })
