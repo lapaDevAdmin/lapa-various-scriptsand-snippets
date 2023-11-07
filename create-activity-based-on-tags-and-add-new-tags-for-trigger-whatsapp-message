@@ -1,0 +1,39 @@
+# ID delle etichette
+id_cliente_pasta_fresca = 102  # ID dell'etichetta "CLIENTE PASTA FRESCA"
+id_da_chiamare_lunedi = 103  # ID dell'etichetta "DA CHIAMARE LUNEDI"
+
+# Verifica che le etichette esistano
+etichetta_cliente_pasta_fresca = env['res.partner.category'].browse(
+    id_cliente_pasta_fresca)
+etichetta_da_chiamare_lunedi = env['res.partner.category'].browse(
+    id_da_chiamare_lunedi)
+
+if not etichetta_cliente_pasta_fresca.exists():
+    log('L\'etichetta "CLIENTE PASTA FRESCA" non esiste.', level='error')
+    # Potresti voler interrompere l'esecuzione qui o gestire la situazione diversamente
+if not etichetta_da_chiamare_lunedi.exists():
+    log('L\'etichetta "DA CHIAMARE LUNEDI" non esiste.', level='error')
+    # Potresti voler interrompere l'esecuzione qui o gestire la situazione diversamente
+
+# Se entrambe le etichette esistono, procediamo
+if etichetta_cliente_pasta_fresca.exists() and etichetta_da_chiamare_lunedi.exists():
+    # Cerca tutti i contatti con l'etichetta "CLIENTE PASTA FRESCA"
+    contatti = env['res.partner'].search(
+        [('category_id', 'in', [id_cliente_pasta_fresca])])
+
+    for contatto in contatti:
+        # Aggiungi l'etichetta "DA CHIAMARE LUNEDI" al contatto se non è già presente
+        if id_da_chiamare_lunedi not in contatto.category_id.ids:
+            contatto.write({'category_id': [(4, id_da_chiamare_lunedi)]})
+
+        # Crea una nuova attività per il contatto
+        env['mail.activity'].create({
+            'res_model_id': env['ir.model'].search([('model', '=', 'res.partner')], limit=1).id,
+            'res_id': contatto.id,
+            'activity_type_id': 4,
+            'user_id': env.user.id,
+            'note': 'Contattare il cliente per ordine pasta fresca',
+            'summary': 'Contattare il cliente per ordine pasta fresca',
+            # Usa datetime.date.today() per ottenere la data odierna
+            'date_deadline': datetime.date.today()
+        })
